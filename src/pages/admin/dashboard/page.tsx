@@ -1,7 +1,7 @@
-import { useQuery } from "convex/react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { CalendarCheck, GraduationCap, Inbox, Scissors } from "lucide-react";
-import { api } from "@/convex/_generated/api.js";
+import { fetchStats } from "@/lib/api/admin.ts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
@@ -9,7 +9,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/
 import PageHeader from "../_components/PageHeader.tsx";
 
 export default function DashboardPage() {
-  const stats = useQuery(api.admin.content.stats, {});
+  const { data: stats } = useQuery({ queryKey: ["admin", "stats"], queryFn: fetchStats });
   const cards = [
     { label: "New bookings", value: stats?.newBookings, icon: Inbox, to: "/admin/bookings" },
     { label: "All bookings", value: stats?.totalBookings, icon: CalendarCheck, to: "/admin/bookings" },
@@ -48,7 +48,7 @@ export default function DashboardPage() {
       ) : (
         <ul className="divide-y rounded-lg border">
           {stats.latest.map((a) => (
-            <li key={a._id} className="flex items-center justify-between gap-3 p-3 text-sm">
+            <li key={a.id} className="flex items-center justify-between gap-3 p-3 text-sm">
               <div className="min-w-0">
                 <p className="truncate font-medium">{a.name} · {a.service}</p>
                 <p className="text-muted-foreground">{a.date} {a.time}</p>

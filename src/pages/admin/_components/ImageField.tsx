@@ -1,28 +1,20 @@
 import { useRef, useState } from "react";
-import { useMutation } from "convex/react";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
-import { api } from "@/convex/_generated/api.js";
-import type { Id } from "@/convex/_generated/dataModel.d.ts";
+import { uploadMedia } from "@/lib/api/admin.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { errorMessage } from "../_lib/fields.ts";
+import { useRefresh } from "../_lib/use-admin.ts";
 
 // Hook shared by the image field and the Media page
-export function useUpload() {
-  const getUrl = useMutation(api.admin.media.generateUploadUrl);
-  const save = useMutation(api.admin.media.saveMedia);
-  return async (file: File): Promise<string> => {
-    const uploadUrl = await getUrl({});
-    const res = await fetch(uploadUrl, {
-      method: "POST",
-      headers: { "Content-Type": file.type },
-      body: file,
-    });
-    if (!res.ok) throw new Error("Upload failed");
-    const { storageId } = (await res.json()) as { storageId: Id<"_storage"> };
-    return await save({ storageId, name: file.name, alt: "" });
+export function useUpload(): (file: File) => Promise<string> {
+  const refresh = useRefresh();
+  return async (file) => {
+    const url = await uploadMedia(file);
+    await refresh();
+    return url;
   };
 }
 
