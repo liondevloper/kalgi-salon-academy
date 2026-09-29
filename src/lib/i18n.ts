@@ -1,4 +1,4 @@
-import type { L } from "@/convex/seedData.ts";
+import type { L } from "@/lib/seed-data.ts";
 
 export type Locale = "en" | "hi" | "gu";
 
