@@ -1,12 +1,11 @@
 import { useEffect, type ReactNode } from "react";
-import { useMutation, useQuery } from "convex/react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
-import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { SiteProvider } from "@/lib/site-context.tsx";
 import { isLocale, saveLocale, savedLocale, type Locale } from "@/lib/i18n.ts";
 import { seedSiteData, str, toSiteData, type SiteData } from "@/lib/data.ts";
 import { resolveTokens, themeStyle } from "@/lib/themes.ts";
+import { useSupabaseBundle } from "@/lib/supabase-content.ts";
 import SiteShell from "@/components/site/SiteShell.tsx";
 import Footer from "@/components/site/Footer.tsx";
 import HomePage from "./home/page.tsx";
@@ -21,18 +20,12 @@ import NotFound from "./NotFound.tsx";
 
 const ENV_DEMO = import.meta.env.VITE_DEMO_MODE !== "false";
 
-// Loads content once, seeds an empty database, and applies theme + locale
+// Loads content from Supabase and applies theme + locale
 function LocaleSite({ children }: { children: (data: SiteData, path: string) => ReactNode }) {
   const { locale } = useParams();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const bundle = useQuery(api.content.bundle, {});
-  const seed = useMutation(api.seed.ensureSeeded);
-  const seeded = bundle?.seeded;
-
-  useEffect(() => {
-    if (seeded === false) void seed({});
-  }, [seeded, seed]);
+  const bundle = useSupabaseBundle();
 
   const loc: Locale = isLocale(locale) ? locale : "en";
   useEffect(() => {
