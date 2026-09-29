@@ -1,5 +1,5 @@
-import type { L } from "@/convex/seedData.ts";
-import { SEED_ITEMS, SEED_SETTINGS } from "@/convex/seedData.ts";
+import type { L } from "@/lib/seed-data.ts";
+import { SEED_ITEMS, SEED_SETTINGS } from "@/lib/seed-data.ts";
 import type { Locale } from "./i18n.ts";
 
 // Content arrives as loosely-typed JSON; these helpers narrow it safely.
