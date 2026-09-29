@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Switch } from "@/components/ui/switch.tsx";
 import { rec, str } from "@/lib/data.ts";
-import { SECTION_KEYS } from "@/convex/seedData.ts";
+import { SECTION_KEYS } from "@/lib/seed-data.ts";
 import { setSetting, useSiteData, withToast } from "@/lib/supabase-admin.ts";
 import PageHeader from "../_components/PageHeader.tsx";
 
