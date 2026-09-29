@@ -8,10 +8,9 @@ import { Label } from "@/components/ui/label.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { errorMessage } from "../_lib/fields.ts";
 
-// Email and password sign in (Supabase Auth). Staff create their account once, then the owner adds them.
+// Email and password sign in only (Supabase Auth). Accounts are created by the owner, not on this page.
 export default function LoginForm() {
-  const { signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<"in" | "up">("in");
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -20,12 +19,7 @@ export default function LoginForm() {
     e.preventDefault();
     setBusy(true);
     try {
-      if (mode === "in") {
-        await signIn(email.trim(), password);
-      } else {
-        const { needsConfirmation } = await signUp(email.trim(), password);
-        if (needsConfirmation) toast.success("Check your email to confirm your account, then sign in.");
-      }
+      await signIn(email.trim(), password);
     } catch (err) {
       toast.error(errorMessage(err, "Could not sign in"));
     } finally {
@@ -38,9 +32,7 @@ export default function LoginForm() {
       <div className="grid justify-items-center gap-2 text-center">
         <ShieldCheck className="size-10 text-primary" />
         <h1 className="text-2xl font-semibold">Kalgi Admin</h1>
-        <p className="text-sm text-muted-foreground">
-          {mode === "in" ? "Sign in to manage bookings and website content." : "Create your staff account."}
-        </p>
+        <p className="text-sm text-muted-foreground">Sign in to manage bookings and website content.</p>
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="login-email">Email</Label>
@@ -49,15 +41,11 @@ export default function LoginForm() {
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="login-password">Password</Label>
-        <Input id="login-password" type="password" required minLength={6}
-          autoComplete={mode === "in" ? "current-password" : "new-password"}
+        <Input id="login-password" type="password" required autoComplete="current-password"
           value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
       <Button type="submit" disabled={busy}>
-        {busy && <Spinner />} {mode === "in" ? "Sign in" : "Create account"}
-      </Button>
-      <Button type="button" variant="ghost" onClick={() => setMode(mode === "in" ? "up" : "in")}>
-        {mode === "in" ? "New here? Create an account" : "Have an account? Sign in"}
+        {busy && <Spinner />} Sign in
       </Button>
     </form>
   );
