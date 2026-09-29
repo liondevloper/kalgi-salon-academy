@@ -92,6 +92,7 @@ function BottomNav() {
   );
 }
 
+// No circle behind the logo: the glyph itself is the button.
 function WhatsAppFab() {
   const { site, t, preview } = useSite();
   return (
@@ -102,11 +103,11 @@ function WhatsAppFab() {
       aria-label="WhatsApp"
       onClick={preview ? (e) => e.preventDefault() : undefined}
       className={cn(
-        "z-40 grid size-14 cursor-pointer place-items-center rounded-full bg-[#25D366] text-white shadow-[0_6px_0_#128c4a,0_12px_20px_rgba(0,0,0,.3)] transition-transform hover:-translate-y-0.5 active:translate-y-[3px]",
+        "z-40 cursor-pointer text-[#25D366] drop-shadow-[0_4px_8px_rgba(0,0,0,.35)] transition-transform hover:-translate-y-0.5 active:translate-y-[2px]",
         preview ? "absolute bottom-24 right-3" : "fixed bottom-28 right-4",
       )}
     >
-      <WhatsAppIcon className="size-8" />
+      <WhatsAppIcon className="size-14" />
     </a>
   );
 }
