@@ -1,13 +1,15 @@
-import { ConvexProviderWithHerculesAuth } from "@usehercules/auth/convex-react";
-import { ConvexReactClient } from "convex/react";
+import { createContext, useContext } from "react";
+import { supabase } from "@/lib/supabase/client.ts";
 
-const convexUrl = import.meta.env.VITE_CONVEX_URL ?? "http://localhost:3000";
-const convex = new ConvexReactClient(convexUrl);
+const SupabaseContext = createContext(supabase);
 
-export function ConvexProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <ConvexProviderWithHerculesAuth client={convex}>
-      {children}
-    </ConvexProviderWithHerculesAuth>
-  );
+export function SupabaseProvider({ children }: { children: React.ReactNode }) {
+  return <SupabaseContext.Provider value={supabase}>{children}</SupabaseContext.Provider>;
 }
+
+export function useSupabase() {
+  return useContext(SupabaseContext);
+}
+
+/** Temporary compatibility export while feature modules are migrated. */
+export const ConvexProvider = SupabaseProvider;
