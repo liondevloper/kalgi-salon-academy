@@ -1,12 +1,11 @@
 import { useEffect, type ReactNode } from "react";
-import { useMutation, useQuery } from "convex/react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
-import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { SiteProvider } from "@/lib/site-context.tsx";
 import { isLocale, saveLocale, savedLocale, type Locale } from "@/lib/i18n.ts";
 import { seedSiteData, str, toSiteData, type SiteData } from "@/lib/data.ts";
 import { resolveTokens, themeStyle } from "@/lib/themes.ts";
+import { useBundle } from "@/hooks/use-bundle.ts";
 import SiteShell from "@/components/site/SiteShell.tsx";
 import Footer from "@/components/site/Footer.tsx";
 import HomePage from "./home/page.tsx";
@@ -21,18 +20,12 @@ import NotFound from "./NotFound.tsx";
 
 const ENV_DEMO = import.meta.env.VITE_DEMO_MODE !== "false";
 
-// Loads content once, seeds an empty database, and applies theme + locale
+// Loads content once and applies theme + locale. An empty or unreachable database shows the built-in demo content.
 function LocaleSite({ children }: { children: (data: SiteData, path: string) => ReactNode }) {
   const { locale } = useParams();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const bundle = useQuery(api.content.bundle, {});
-  const seed = useMutation(api.seed.ensureSeeded);
-  const seeded = bundle?.seeded;
-
-  useEffect(() => {
-    if (seeded === false) void seed({});
-  }, [seeded, seed]);
+  const { data: bundle, isPending } = useBundle();
 
   const loc: Locale = isLocale(locale) ? locale : "en";
   useEffect(() => {
@@ -40,9 +33,8 @@ function LocaleSite({ children }: { children: (data: SiteData, path: string) => 
     document.documentElement.lang = loc;
   }, [loc]);
 
-  const demoNow = ENV_DEMO && bundle?.settings.site !== undefined
-    ? (bundle.settings.site as { demoMode?: boolean }).demoMode !== false
-    : ENV_DEMO;
+  const siteSetting = bundle?.settings.site as { demoMode?: boolean } | undefined;
+  const demoNow = ENV_DEMO && siteSetting !== undefined ? siteSetting.demoMode !== false : ENV_DEMO;
   // Demo on: noindex. Demo off: allow indexing.
   useEffect(() => {
     let robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
@@ -54,10 +46,10 @@ function LocaleSite({ children }: { children: (data: SiteData, path: string) => 
     robots.content = demoNow ? "noindex, nofollow" : "index, follow";
   }, [demoNow]);
 
-  if (bundle === undefined) {
+  if (isPending) {
     return <div className="p-6"><Skeleton className="h-screen w-full" /></div>;
   }
-  const data = bundle.seeded ? toSiteData(bundle) : seedSiteData();
+  const data = bundle?.seeded ? toSiteData(bundle) : seedSiteData();
   const themeRow = data.settings.theme;
   const { id, tokens } = resolveTokens(themeRow.active, themeRow.overrides);
   const demo = ENV_DEMO && data.settings.site.demoMode !== false;
