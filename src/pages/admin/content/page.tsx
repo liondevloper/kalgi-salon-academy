@@ -1,30 +1,29 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "convex/react";
 import { useParams } from "react-router-dom";
 import { ArrowDown, ArrowUp, Eye, EyeOff, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
-import { api } from "@/convex/_generated/api.js";
-import type { Doc, Id } from "@/convex/_generated/dataModel.d.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog.tsx";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty.tsx";
-import { rec, type Item, type Rec } from "@/lib/data.ts";
+import type { Item, Rec } from "@/lib/data.ts";
+import {
+  listItems, moveItem, removeItem, setVisible, upsertItem, useLoad, withToast, type ItemDoc,
+} from "@/lib/supabase-admin.ts";
 import NotFound from "../../NotFound.tsx";
 import PageHeader from "../_components/PageHeader.tsx";
 import FieldsForm from "../_components/FieldsForm.tsx";
 import ConfirmDelete from "../_components/ConfirmDelete.tsx";
-import { findKind, withToast, type KindConfig } from "../_lib/fields.ts";
+import { findKind, type KindConfig } from "../_lib/fields.ts";
 
-type Editing = { id?: Id<"items">; data: Rec } | null;
+type Editing = { id?: string; data: Rec } | null;
 
 function Editor({ config, editing, onClose }: { config: KindConfig; editing: Editing; onClose: () => void }) {
-  const upsert = useMutation(api.admin.content.upsertItem);
-  const categories = useQuery(api.admin.content.listItems, editing ? { kind: "category" } : "skip");
+  const categories = useLoad(() => listItems("category"), "editor-categories");
   const [draft, setDraft] = useState<Rec>(editing?.data ?? {});
-  const cats: Item[] = (categories ?? []).map((c) => ({ _id: c._id, order: c.order, data: rec(c.data) }));
+  const cats: Item[] = (categories ?? []).map((c) => ({ _id: c._id, order: c.order, data: c.data }));
 
   const save = async () => {
-    const ok = await withToast(() => upsert({ id: editing?.id, kind: config.kind, data: draft }));
+    const ok = await withToast(() => upsertItem(editing?.id, config.kind, draft));
     if (ok) onClose();
   };
 
@@ -42,23 +41,20 @@ function Editor({ config, editing, onClose }: { config: KindConfig; editing: Edi
   );
 }
 
-function Row({ item, config, onEdit }: { item: Doc<"items">; config: KindConfig; onEdit: () => void }) {
-  const move = useMutation(api.admin.content.moveItem);
-  const setVisible = useMutation(api.admin.content.setVisible);
-  const remove = useMutation(api.admin.content.removeItem);
+function Row({ item, config, onEdit }: { item: ItemDoc; config: KindConfig; onEdit: () => void }) {
   return (
     <li className="flex items-center gap-2 p-3">
       <span className={`min-w-0 flex-1 truncate text-sm ${item.visible ? "" : "text-muted-foreground line-through"}`}>
-        {config.title(rec(item.data))}
+        {config.title(item.data)}
       </span>
-      <Button size="icon" variant="ghost" aria-label="Move up" onClick={() => void move({ id: item._id, direction: "up" })}><ArrowUp className="size-4" /></Button>
-      <Button size="icon" variant="ghost" aria-label="Move down" onClick={() => void move({ id: item._id, direction: "down" })}><ArrowDown className="size-4" /></Button>
+      <Button size="icon" variant="ghost" aria-label="Move up" onClick={() => void withToast(() => moveItem(item, "up"), "Moved")}><ArrowUp className="size-4" /></Button>
+      <Button size="icon" variant="ghost" aria-label="Move down" onClick={() => void withToast(() => moveItem(item, "down"), "Moved")}><ArrowDown className="size-4" /></Button>
       <Button size="icon" variant="ghost" aria-label={item.visible ? "Hide" : "Show"}
-        onClick={() => void withToast(() => setVisible({ id: item._id, visible: !item.visible }), item.visible ? "Hidden" : "Visible")}>
+        onClick={() => void withToast(() => setVisible(item._id, !item.visible), item.visible ? "Hidden" : "Visible")}>
         {item.visible ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
       </Button>
       <Button size="icon" variant="ghost" aria-label="Edit" onClick={onEdit}><Pencil className="size-4" /></Button>
-      <ConfirmDelete onConfirm={() => withToast(() => remove({ id: item._id }), "Deleted")}>
+      <ConfirmDelete onConfirm={() => withToast(() => removeItem(item._id), "Deleted")}>
         <Button size="icon" variant="ghost" aria-label="Delete" className="text-destructive"><Trash2 className="size-4" /></Button>
       </ConfirmDelete>
     </li>
@@ -66,7 +62,7 @@ function Row({ item, config, onEdit }: { item: Doc<"items">; config: KindConfig;
 }
 
 function KindList({ config }: { config: KindConfig }) {
-  const items = useQuery(api.admin.content.listItems, { kind: config.kind });
+  const items = useLoad(() => listItems(config.kind), `items-${config.kind}`);
   const [editing, setEditing] = useState<Editing>(null);
   const add = () => setEditing({ data: {} });
   return (
@@ -86,7 +82,7 @@ function KindList({ config }: { config: KindConfig }) {
       ) : (
         <ul className="divide-y rounded-lg border">
           {items.map((it) => (
-            <Row key={it._id} item={it} config={config} onEdit={() => setEditing({ id: it._id, data: rec(it.data) })} />
+            <Row key={it._id} item={it} config={config} onEdit={() => setEditing({ id: it._id, data: it.data })} />
           ))}
         </ul>
       )}

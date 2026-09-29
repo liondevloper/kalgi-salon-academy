@@ -1,8 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "convex/react";
 import { CalendarCheck, MessageCircle, Phone, Trash2 } from "lucide-react";
-import { api } from "@/convex/_generated/api.js";
-import type { Doc } from "@/convex/_generated/dataModel.d.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
@@ -11,18 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty.tsx";
 import { telLink, waLink } from "@/lib/data.ts";
+import {
+  STATUSES, isStatus, listAppointments, removeAppointment, updateAppointment, useLoad, withToast, type Appointment,
+} from "@/lib/supabase-admin.ts";
 import PageHeader from "../_components/PageHeader.tsx";
 import ConfirmDelete from "../_components/ConfirmDelete.tsx";
-import { withToast } from "../_lib/fields.ts";
 
-const STATUSES = ["New", "Confirmed", "Completed", "Cancelled"] as const;
-type Status = (typeof STATUSES)[number];
-const isStatus = (x: string): x is Status => (STATUSES as readonly string[]).includes(x);
-
-function Row({ a }: { a: Doc<"appointments"> }) {
-  const update = useMutation(api.admin.bookings.updateAppointment);
-  const remove = useMutation(api.admin.bookings.removeAppointment);
-  const [notes, setNotes] = useState(a.notes ?? "");
+function Row({ a }: { a: Appointment }) {
+  const [notes, setNotes] = useState(a.notes);
   return (
     <li className="grid gap-3 rounded-lg border p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -32,13 +25,13 @@ function Row({ a }: { a: Doc<"appointments"> }) {
           <p className="text-xs text-muted-foreground">Received {new Date(a.createdAt).toLocaleString()}</p>
           {a.message && <p className="mt-1 text-sm">{a.message}</p>}
         </div>
-        <Select value={a.status} onValueChange={(s) => isStatus(s) && void withToast(() => update({ id: a._id, status: s }))}>
+        <Select value={a.status} onValueChange={(s) => isStatus(s) && void withToast(() => updateAppointment(a._id, { status: s }))}>
           <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
           <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
         </Select>
       </div>
       <Textarea rows={2} placeholder="Private notes" value={notes} onChange={(e) => setNotes(e.target.value)}
-        onBlur={() => notes !== (a.notes ?? "") && void withToast(() => update({ id: a._id, notes }), "Notes saved")} />
+        onBlur={() => notes !== a.notes && void withToast(() => updateAppointment(a._id, { notes }), "Notes saved")} />
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="secondary" asChild><a href={telLink(a.phone)}><Phone className="size-4" /> {a.phone}</a></Button>
         <Button size="sm" variant="secondary" asChild>
@@ -46,7 +39,7 @@ function Row({ a }: { a: Doc<"appointments"> }) {
             <MessageCircle className="size-4" /> WhatsApp
           </a>
         </Button>
-        <ConfirmDelete onConfirm={() => withToast(() => remove({ id: a._id }), "Deleted")}>
+        <ConfirmDelete onConfirm={() => withToast(() => removeAppointment(a._id), "Deleted")}>
           <Button size="sm" variant="ghost" className="ml-auto text-destructive"><Trash2 className="size-4" /></Button>
         </ConfirmDelete>
       </div>
@@ -55,7 +48,7 @@ function Row({ a }: { a: Doc<"appointments"> }) {
 }
 
 export default function BookingsPage() {
-  const list = useQuery(api.admin.bookings.listAppointments, {});
+  const list = useLoad(listAppointments, "appointments");
   const [filter, setFilter] = useState("all");
   const shown = (list ?? []).filter((a) => filter === "all" || a.status === filter);
   return (

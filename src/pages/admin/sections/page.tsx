@@ -1,15 +1,12 @@
 import { useState } from "react";
-import { useMutation } from "convex/react";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { api } from "@/convex/_generated/api.js";
 import { Button } from "@/components/ui/button.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Switch } from "@/components/ui/switch.tsx";
 import { rec, str } from "@/lib/data.ts";
 import { SECTION_KEYS } from "@/convex/seedData.ts";
+import { setSetting, useSiteData, withToast } from "@/lib/supabase-admin.ts";
 import PageHeader from "../_components/PageHeader.tsx";
-import { withToast } from "../_lib/fields.ts";
-import { useSiteData } from "../_lib/use-site-data.ts";
 
 type Entry = { key: string; visible: boolean };
 
@@ -24,7 +21,6 @@ function normalize(raw: unknown): Entry[] {
 }
 
 function Editor({ initial }: { initial: Entry[] }) {
-  const setSetting = useMutation(api.admin.content.setSetting);
   const [list, setList] = useState(initial);
   const swap = (i: number, j: number) => {
     if (j < 0 || j >= list.length) return;
@@ -45,7 +41,7 @@ function Editor({ initial }: { initial: Entry[] }) {
           </li>
         ))}
       </ul>
-      <Button className="mt-4" onClick={() => void withToast(() => setSetting({ key: "sections", value: { list } }))}>Save order</Button>
+      <Button className="mt-4" onClick={() => void withToast(() => setSetting("sections", { list }))}>Save order</Button>
     </>
   );
 }

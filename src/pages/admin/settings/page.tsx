@@ -1,19 +1,16 @@
 import { useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api.js";
 import { Button } from "@/components/ui/button.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Switch } from "@/components/ui/switch.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
 import type { Rec } from "@/lib/data.ts";
+import { setSetting, useSiteData, withToast } from "@/lib/supabase-admin.ts";
 import PageHeader from "../_components/PageHeader.tsx";
 import FieldsForm from "../_components/FieldsForm.tsx";
-import { SETTINGS_FIELDS, withToast } from "../_lib/fields.ts";
-import { useSiteData } from "../_lib/use-site-data.ts";
+import { SETTINGS_FIELDS } from "../_lib/fields.ts";
 
 function SettingForm({ settingKey, initial }: { settingKey: string; initial: Rec }) {
-  const setSetting = useMutation(api.admin.content.setSetting);
   const [draft, setDraft] = useState<Rec>(initial);
   const conf = SETTINGS_FIELDS[settingKey];
   return (
@@ -28,7 +25,7 @@ function SettingForm({ settingKey, initial }: { settingKey: string; initial: Rec
         </div>
       )}
       <FieldsForm fields={conf.fields} value={draft} onChange={setDraft} />
-      <Button className="w-fit" onClick={() => void withToast(() => setSetting({ key: settingKey, value: draft }))}>Save {conf.label.toLowerCase()}</Button>
+      <Button className="w-fit" onClick={() => void withToast(() => setSetting(settingKey, draft))}>Save {conf.label.toLowerCase()}</Button>
     </div>
   );
 }

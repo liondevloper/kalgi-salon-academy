@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "convex/react";
 import { Check } from "lucide-react";
-import { api } from "@/convex/_generated/api.js";
 import { Button } from "@/components/ui/button.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Input } from "@/components/ui/input.tsx";
@@ -10,16 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import PhonePreview from "@/components/preview/PhonePreview.tsx";
 import { rec, str, type Rec } from "@/lib/data.ts";
 import { FONT_OPTIONS, THEME_LIST, isThemeId, resolveTokens, type ThemeId } from "@/lib/themes.ts";
+import { setSetting, useSiteData, withToast } from "@/lib/supabase-admin.ts";
 import { cn } from "@/lib/utils.ts";
 import PageHeader from "../_components/PageHeader.tsx";
-import { withToast } from "../_lib/fields.ts";
-import { useSiteData } from "../_lib/use-site-data.ts";
 
 const COLORS = ["primary", "accent", "background", "surface", "text"] as const;
 const FONTS = ["headingFont", "bodyFont"] as const;
 
 function Editor({ active, overrides }: { active: ThemeId; overrides: Rec }) {
-  const setSetting = useMutation(api.admin.content.setSetting);
   const [theme, setTheme] = useState<ThemeId>(active);
   const [o, setO] = useState<Rec>(overrides);
   const { tokens } = resolveTokens(theme, o);
@@ -68,7 +64,7 @@ function Editor({ active, overrides }: { active: ThemeId; overrides: Rec }) {
           ))}
           <Button variant="ghost" className="w-fit" onClick={() => setO({})}>Reset to theme defaults</Button>
         </div>
-        <Button onClick={() => void withToast(() => setSetting({ key: "theme", value: { active: theme, overrides: o } }), "Theme published")}>
+        <Button onClick={() => void withToast(() => setSetting("theme", { active: theme, overrides: o }), "Theme published")}>
           Publish theme
         </Button>
       </div>

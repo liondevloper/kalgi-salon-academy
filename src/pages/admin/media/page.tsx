@@ -1,23 +1,17 @@
 import { useRef, useState } from "react";
-import { useMutation, useQuery } from "convex/react";
 import { Copy, Image, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { api } from "@/convex/_generated/api.js";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty.tsx";
+import { errorMessage, listMedia, removeMedia, updateAlt, uploadMedia, useLoad, withToast } from "@/lib/supabase-admin.ts";
 import PageHeader from "../_components/PageHeader.tsx";
 import ConfirmDelete from "../_components/ConfirmDelete.tsx";
-import { useUpload } from "../_components/ImageField.tsx";
-import { errorMessage, withToast } from "../_lib/fields.ts";
 
 export default function MediaPage() {
-  const list = useQuery(api.admin.media.listMedia, {});
-  const updateAlt = useMutation(api.admin.media.updateAlt);
-  const remove = useMutation(api.admin.media.removeMedia);
-  const upload = useUpload();
+  const list = useLoad(listMedia, "media");
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
 
@@ -26,7 +20,7 @@ export default function MediaPage() {
     setBusy(true);
     try {
       for (const f of Array.from(files)) {
-        if (f.type.startsWith("image/")) await upload(f);
+        if (f.type.startsWith("image/")) await uploadMedia(f);
       }
       toast.success("Uploaded");
     } catch (e) {
@@ -64,13 +58,13 @@ export default function MediaPage() {
               <img src={m.url} alt={m.alt} className="aspect-square w-full object-cover" loading="lazy" />
               <div className="grid gap-2 p-2">
                 <Input defaultValue={m.alt} placeholder="Alt text"
-                  onBlur={(e) => e.target.value !== m.alt && void withToast(() => updateAlt({ id: m._id, alt: e.target.value }))} />
+                  onBlur={(e) => e.target.value !== m.alt && void withToast(() => updateAlt(m._id, e.target.value))} />
                 <div className="flex gap-1">
                   <Button size="sm" variant="secondary" className="flex-1"
                     onClick={() => void navigator.clipboard.writeText(m.url).then(() => toast.success("Link copied"))}>
                     <Copy className="size-4" /> Copy link
                   </Button>
-                  <ConfirmDelete onConfirm={() => withToast(() => remove({ id: m._id }), "Deleted")}>
+                  <ConfirmDelete onConfirm={() => withToast(() => removeMedia(m), "Deleted")}>
                     <Button size="icon" variant="ghost" className="text-destructive" aria-label="Delete"><Trash2 className="size-4" /></Button>
                   </ConfirmDelete>
                 </div>

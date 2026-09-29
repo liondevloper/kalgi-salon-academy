@@ -1,15 +1,14 @@
-import { useQuery } from "convex/react";
 import { Link } from "react-router-dom";
 import { CalendarCheck, GraduationCap, Inbox, Scissors } from "lucide-react";
-import { api } from "@/convex/_generated/api.js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty.tsx";
+import { fetchStats, useLoad } from "@/lib/supabase-admin.ts";
 import PageHeader from "../_components/PageHeader.tsx";
 
 export default function DashboardPage() {
-  const stats = useQuery(api.admin.content.stats, {});
+  const stats = useLoad(fetchStats, "stats");
   const cards = [
     { label: "New bookings", value: stats?.newBookings, icon: Inbox, to: "/admin/bookings" },
     { label: "All bookings", value: stats?.totalBookings, icon: CalendarCheck, to: "/admin/bookings" },
