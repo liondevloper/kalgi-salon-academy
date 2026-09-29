@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { Authenticated, AuthLoading, Unauthenticated, useMutation, useQuery } from "convex/react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import {
   CalendarCheck, GraduationCap, Image, LayoutDashboard, LayoutList, Menu, Palette, Settings, ShieldCheck, Sparkles,
 } from "lucide-react";
-import { api } from "@/convex/_generated/api.js";
+import { claimOwner, getAdminStatus } from "@/lib/api/admin.ts";
+import { useAuth } from "@/hooks/use-auth.ts";
 import { Button } from "@/components/ui/button.tsx";
-import { SignInButton } from "@/components/ui/signin.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet.tsx";
 import { cn } from "@/lib/utils.ts";
-import { KIND_CONFIGS, withToast } from "./_lib/fields.ts";
+import LoginForm from "./_components/LoginForm.tsx";
+import { KIND_CONFIGS } from "./_lib/fields.ts";
+import { useAct } from "./_lib/use-admin.ts";
 
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -46,31 +48,32 @@ function Center({ children }: { children: React.ReactNode }) {
   return <div className="grid min-h-screen place-items-center bg-background p-6 text-center">{children}</div>;
 }
 
-function Gate() {
-  const me = useQuery(api.admin.access.me, {});
-  const claim = useMutation(api.admin.access.claim);
+function Gate({ userId, email }: { userId: string; email: string }) {
+  const { signOut } = useAuth();
+  const act = useAct();
   const [open, setOpen] = useState(false);
+  const status = useQuery({ queryKey: ["admin", "status", userId], queryFn: () => getAdminStatus(userId) });
 
-  if (me === undefined) return <div className="p-6"><Skeleton className="h-screen w-full" /></div>;
-  if (!me.isAdmin) {
+  if (status.isPending) return <div className="p-6"><Skeleton className="h-screen w-full" /></div>;
+  if (!status.data?.isAdmin) {
     return (
       <Center>
         <div className="max-w-sm space-y-4">
           <ShieldCheck className="mx-auto size-10 text-muted-foreground" />
-          {me.canClaim ? (
+          {status.data?.canClaim ? (
             <>
               <h1 className="text-xl font-semibold">Set up the owner account</h1>
-              <p className="text-sm text-muted-foreground">No admin exists yet. Make {me.email ?? "this account"} the owner.</p>
-              <Button onClick={() => void withToast(() => claim({}), "You are now the owner")}>Become owner</Button>
+              <p className="text-sm text-muted-foreground">No admin exists yet. Make {email} the owner.</p>
+              <Button onClick={() => void act(() => claimOwner(), "You are now the owner")}>Become owner</Button>
             </>
           ) : (
             <>
               <h1 className="text-xl font-semibold">No admin access</h1>
-              <p className="text-sm text-muted-foreground">{me.email ?? "This account"} is not an admin. Ask the owner to add you.</p>
+              <p className="text-sm text-muted-foreground">{email} is not an admin. Ask the owner to add you.</p>
             </>
           )}
           <div className="flex justify-center gap-2">
-            <SignInButton variant="secondary" />
+            <Button variant="secondary" onClick={() => void signOut()}>Sign out</Button>
             <Button variant="ghost" asChild><Link to="/">Back to site</Link></Button>
           </div>
         </div>
@@ -97,10 +100,10 @@ function Gate() {
               <NavList onPick={() => setOpen(false)} />
             </SheetContent>
           </Sheet>
-          <span className="truncate text-sm text-muted-foreground">{me.email}</span>
+          <span className="truncate text-sm text-muted-foreground">{email}</span>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" asChild><Link to="/">View site</Link></Button>
-            <SignInButton size="sm" variant="secondary" />
+            <Button size="sm" variant="secondary" onClick={() => void signOut()}>Sign out</Button>
           </div>
         </header>
         <main className="mx-auto max-w-5xl p-4 md:p-8"><Outlet /></main>
@@ -110,20 +113,8 @@ function Gate() {
 }
 
 export default function AdminLayout() {
-  return (
-    <>
-      <AuthLoading><div className="p-6"><Skeleton className="h-screen w-full" /></div></AuthLoading>
-      <Unauthenticated>
-        <Center>
-          <div className="max-w-sm space-y-4">
-            <ShieldCheck className="mx-auto size-10 text-primary" />
-            <h1 className="text-2xl font-semibold">Kalgi Admin</h1>
-            <p className="text-sm text-muted-foreground">Sign in to manage bookings and website content.</p>
-            <SignInButton />
-          </div>
-        </Center>
-      </Unauthenticated>
-      <Authenticated><Gate /></Authenticated>
-    </>
-  );
+  const { user, loading } = useAuth();
+  if (loading) return <div className="p-6"><Skeleton className="h-screen w-full" /></div>;
+  if (!user) return <Center><LoginForm /></Center>;
+  return <Gate userId={user.id} email={user.email ?? "this account"} />;
 }

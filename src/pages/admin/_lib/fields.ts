@@ -1,4 +1,3 @@
-import { ConvexError } from "convex/values";
 import { toast } from "sonner";
 import { lo, type Rec } from "@/lib/data.ts";
 
@@ -203,13 +202,7 @@ export const SETTINGS_FIELDS: Record<string, { label: string; fields: Field[] }>
 };
 
 export function errorMessage(e: unknown, fallback = "Something went wrong"): string {
-  if (e instanceof ConvexError) {
-    const d: unknown = e.data;
-    if (typeof d === "object" && d !== null && "message" in d && typeof d.message === "string") {
-      return d.message;
-    }
-  }
-  return fallback;
+  return e instanceof Error && e.message ? e.message : fallback;
 }
 
 export async function withToast(run: () => Promise<unknown>, ok = "Saved"): Promise<boolean> {
