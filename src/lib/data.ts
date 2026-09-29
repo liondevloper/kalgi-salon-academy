@@ -1,5 +1,4 @@
-import type { L } from "@/convex/seedData.ts";
-import { SEED_ITEMS, SEED_SETTINGS } from "@/convex/seedData.ts";
+import { SEED_ITEMS, SEED_SETTINGS, type L } from "./seed-data.ts";
 import type { Locale } from "./i18n.ts";
 
 // Content arrives as loosely-typed JSON; these helpers narrow it safely.
@@ -30,7 +29,7 @@ export type SiteData = {
   items: Record<string, Item[]>;
 };
 
-type BundleLike = {
+export type Bundle = {
   seeded: boolean;
   settings: Record<string, unknown>;
   items: Record<string, { _id: string; order: number; data: Rec }[]>;
@@ -38,7 +37,7 @@ type BundleLike = {
 
 const SETTING_KEYS = ["site", "hero", "about", "theme", "sections", "seo"];
 
-export function toSiteData(bundle: BundleLike): SiteData {
+export function toSiteData(bundle: Bundle): SiteData {
   const settings: Record<string, Rec> = {};
   for (const key of SETTING_KEYS) {
     settings[key] = { ...rec(SEED_SETTINGS[key]), ...rec(bundle.settings[key]) };
