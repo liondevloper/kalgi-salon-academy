@@ -15,16 +15,12 @@ export default defineSchema({
     email: v.optional(v.string()),
   }).index("by_token", ["tokenIdentifier"]),
 
-  // Owners who may open the admin panel
+  // Signed-in accounts that may open the admin panel
   admins: defineTable({
     tokenIdentifier: v.string(),
+    email: v.optional(v.string()),
+    name: v.optional(v.string()),
   }).index("by_token", ["tokenIdentifier"]),
-
-  // Password-login sessions for the admin panel
-  adminSessions: defineTable({
-    token: v.string(),
-    expiresAt: v.string(),
-  }).index("by_token", ["token"]),
 
   // Single-document site config, keyed: site, hero, about, theme, sections, seo
   settings: defineTable({

@@ -1,13 +1,19 @@
 import { ConvexError } from "convex/values";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import type { Doc } from "../_generated/dataModel";
 
-// Every admin function calls this first with the session token from the password login.
-export async function requireAdmin(ctx: QueryCtx | MutationCtx, token: string): Promise<void> {
-  const session = await ctx.db
-    .query("adminSessions")
-    .withIndex("by_token", (q) => q.eq("token", token))
-    .unique();
-  if (!session || session.expiresAt < new Date().toISOString()) {
-    throw new ConvexError({ code: "UNAUTHENTICATED", message: "Please log in again" });
+// Every admin function calls this first. Identity always comes from Hercules Auth.
+export async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<Doc<"admins">> {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new ConvexError({ code: "UNAUTHENTICATED", message: "Please sign in" });
   }
+  const admin = await ctx.db
+    .query("admins")
+    .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+    .unique();
+  if (!admin) {
+    throw new ConvexError({ code: "FORBIDDEN", message: "This account is not an admin" });
+  }
+  return admin;
 }

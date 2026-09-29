@@ -3,9 +3,9 @@ import { mutation, query } from "../_generated/server";
 import { requireAdmin } from "../lib/adminAuth";
 
 export const listItems = query({
-  args: { token: v.string(), kind: v.string() },
+  args: { kind: v.string() },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    await requireAdmin(ctx);
     return await ctx.db
       .query("items")
       .withIndex("by_kind_and_order", (q) => q.eq("kind", args.kind))
@@ -15,14 +15,13 @@ export const listItems = query({
 
 export const upsertItem = mutation({
   args: {
-    token: v.string(),
     id: v.optional(v.id("items")),
     kind: v.string(),
     data: v.any(),
     visible: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    await requireAdmin(ctx);
     if (args.id) {
       await ctx.db.patch("items", args.id, {
         data: args.data,
@@ -45,18 +44,18 @@ export const upsertItem = mutation({
 });
 
 export const setVisible = mutation({
-  args: { token: v.string(), id: v.id("items"), visible: v.boolean() },
+  args: { id: v.id("items"), visible: v.boolean() },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    await requireAdmin(ctx);
     await ctx.db.patch("items", args.id, { visible: args.visible });
     return null;
   },
 });
 
 export const removeItem = mutation({
-  args: { token: v.string(), id: v.id("items") },
+  args: { id: v.id("items") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    await requireAdmin(ctx);
     await ctx.db.delete("items", args.id);
     return null;
   },
@@ -64,9 +63,9 @@ export const removeItem = mutation({
 
 // Swap order with the neighbour above or below
 export const moveItem = mutation({
-  args: { token: v.string(), id: v.id("items"), direction: v.union(v.literal("up"), v.literal("down")) },
+  args: { id: v.id("items"), direction: v.union(v.literal("up"), v.literal("down")) },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    await requireAdmin(ctx);
     const item = await ctx.db.get("items", args.id);
     if (!item) throw new ConvexError({ code: "NOT_FOUND", message: "Item not found" });
     const neighbour =
@@ -93,9 +92,9 @@ export const moveItem = mutation({
 });
 
 export const setSetting = mutation({
-  args: { token: v.string(), key: v.string(), value: v.any() },
+  args: { key: v.string(), value: v.any() },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    await requireAdmin(ctx);
     const existing = await ctx.db
       .query("settings")
       .withIndex("by_key", (q) => q.eq("key", args.key))
@@ -107,9 +106,9 @@ export const setSetting = mutation({
 });
 
 export const stats = query({
-  args: { token: v.string() },
-  handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
     const appointments = await ctx.db.query("appointments").order("desc").take(500);
     const enquiries = await ctx.db.query("enquiries").order("desc").take(500);
     const services = await ctx.db

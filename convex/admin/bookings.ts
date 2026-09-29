@@ -3,16 +3,15 @@ import { mutation, query } from "../_generated/server";
 import { requireAdmin } from "../lib/adminAuth";
 
 export const listAppointments = query({
-  args: { token: v.string() },
-  handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
     return await ctx.db.query("appointments").order("desc").take(500);
   },
 });
 
 export const updateAppointment = mutation({
   args: {
-    token: v.string(),
     id: v.id("appointments"),
     status: v.optional(
       v.union(
@@ -25,7 +24,7 @@ export const updateAppointment = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    await requireAdmin(ctx);
     await ctx.db.patch("appointments", args.id, {
       ...(args.status ? { status: args.status } : {}),
       ...(args.notes === undefined ? {} : { notes: args.notes }),
@@ -35,26 +34,26 @@ export const updateAppointment = mutation({
 });
 
 export const removeAppointment = mutation({
-  args: { token: v.string(), id: v.id("appointments") },
+  args: { id: v.id("appointments") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    await requireAdmin(ctx);
     await ctx.db.delete("appointments", args.id);
     return null;
   },
 });
 
 export const listEnquiries = query({
-  args: { token: v.string() },
-  handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
     return await ctx.db.query("enquiries").order("desc").take(500);
   },
 });
 
 export const removeEnquiry = mutation({
-  args: { token: v.string(), id: v.id("enquiries") },
+  args: { id: v.id("enquiries") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    await requireAdmin(ctx);
     await ctx.db.delete("enquiries", args.id);
     return null;
   },

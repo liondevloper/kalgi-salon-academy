@@ -1,45 +1,95 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
+import { requireAdmin } from "../lib/adminAuth";
 
-const SESSION_DAYS = 14;
-
-// Password comes from the ADMIN_PASSWORD secret. No password set means nobody can log in.
-export const login = mutation({
-  args: { password: v.string() },
-  handler: async (ctx, args): Promise<string> => {
-    const expected = process.env.ADMIN_PASSWORD;
-    if (!expected) {
-      throw new ConvexError({ code: "BAD_REQUEST", message: "ADMIN_PASSWORD secret is not set yet" });
-    }
-    if (args.password !== expected) {
-      throw new ConvexError({ code: "FORBIDDEN", message: "Wrong password" });
-    }
-    const token = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
-    const expiresAt = new Date(Date.now() + SESSION_DAYS * 86400000).toISOString();
-    await ctx.db.insert("adminSessions", { token, expiresAt });
-    return token;
-  },
-});
-
-export const check = query({
-  args: { token: v.string() },
-  handler: async (ctx, args): Promise<boolean> => {
-    const session = await ctx.db
-      .query("adminSessions")
-      .withIndex("by_token", (q) => q.eq("token", args.token))
+// Tells the admin UI who is signed in and whether they may enter
+export const me = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return { signedIn: false, isAdmin: false, canClaim: false, email: null };
+    const admin = await ctx.db
+      .query("admins")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
       .unique();
-    return session !== null && session.expiresAt >= new Date().toISOString();
+    const anyAdmin = await ctx.db.query("admins").first();
+    return {
+      signedIn: true,
+      isAdmin: admin !== null,
+      canClaim: anyAdmin === null,
+      email: identity.email ?? null,
+    };
   },
 });
 
-export const logout = mutation({
-  args: { token: v.string() },
+// The very first signed-in account becomes the owner
+export const claim = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({ code: "UNAUTHENTICATED", message: "Please sign in" });
+    }
+    const anyAdmin = await ctx.db.query("admins").first();
+    if (anyAdmin) {
+      throw new ConvexError({ code: "FORBIDDEN", message: "An owner already exists" });
+    }
+    await ctx.db.insert("admins", {
+      tokenIdentifier: identity.tokenIdentifier,
+      email: identity.email,
+      name: identity.name,
+    });
+    return null;
+  },
+});
+
+export const listAdmins = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    const rows = await ctx.db.query("admins").take(50);
+    return rows.map((r) => ({ _id: r._id, email: r.email ?? "", name: r.name ?? "" }));
+  },
+});
+
+// Add another admin by email; they must have signed in to the site once
+export const addAdmin = mutation({
+  args: { email: v.string() },
   handler: async (ctx, args) => {
-    const session = await ctx.db
-      .query("adminSessions")
-      .withIndex("by_token", (q) => q.eq("token", args.token))
+    await requireAdmin(ctx);
+    const email = args.email.trim().toLowerCase();
+    const users = await ctx.db.query("users").take(2000);
+    const user = users.find((u) => (u.email ?? "").toLowerCase() === email);
+    if (!user) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "No account with this email yet. Ask them to sign in once at /admin first.",
+      });
+    }
+    const existing = await ctx.db
+      .query("admins")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", user.tokenIdentifier))
       .unique();
-    if (session) await ctx.db.delete("adminSessions", session._id);
+    if (existing) {
+      throw new ConvexError({ code: "CONFLICT", message: "Already an admin" });
+    }
+    await ctx.db.insert("admins", {
+      tokenIdentifier: user.tokenIdentifier,
+      email: user.email,
+      name: user.name,
+    });
+    return null;
+  },
+});
+
+export const removeAdmin = mutation({
+  args: { id: v.id("admins") },
+  handler: async (ctx, args) => {
+    const me = await requireAdmin(ctx);
+    if (me._id === args.id) {
+      throw new ConvexError({ code: "BAD_REQUEST", message: "You cannot remove yourself" });
+    }
+    await ctx.db.delete("admins", args.id);
     return null;
   },
 });
