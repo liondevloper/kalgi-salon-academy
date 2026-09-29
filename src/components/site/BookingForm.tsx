@@ -1,11 +1,9 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2 } from "lucide-react";
-import { api } from "@/convex/_generated/api.js";
+import { CheckCircle2, MessageCircle } from "lucide-react";
 import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Label } from "@/components/ui/label.tsx";
@@ -13,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useSite } from "@/lib/site-context.tsx";
 import { str, waLink } from "@/lib/data.ts";
 import { TIME_SLOTS } from "@/lib/site-utils.ts";
+import { createAppointment } from "@/lib/supabase-bookings.ts";
 import { btnClass } from "./button-3d.ts";
-import { MessageCircle } from "lucide-react";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -27,8 +25,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 
 export default function BookingForm() {
-  const { t, L, data, site, preview } = useSite();
-  const create = useMutation(api.bookings.createAppointment);
+  const { t, L, data, site, preview, demo } = useSite();
   const [done, setDone] = useState(false);
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -49,7 +46,7 @@ export default function BookingForm() {
       return;
     }
     try {
-      await create(values);
+      await createAppointment(values, demo);
       setDone(true);
     } catch {
       toast.error(t("failed"));
