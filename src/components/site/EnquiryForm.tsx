@@ -1,16 +1,15 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
-import { api } from "@/convex/_generated/api.js";
 import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
 import { useSite } from "@/lib/site-context.tsx";
+import { createEnquiry } from "@/lib/supabase-bookings.ts";
 import { btnClass } from "./button-3d.ts";
 
 const schema = z.object({
@@ -22,8 +21,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 
 export default function EnquiryForm() {
-  const { t, L, data, preview } = useSite();
-  const create = useMutation(api.bookings.createEnquiry);
+  const { t, L, data, preview, demo } = useSite();
   const [done, setDone] = useState(false);
   const { register, handleSubmit, setValue, watch, formState } = useForm<Values>({
     resolver: zodResolver(schema),
@@ -37,7 +35,7 @@ export default function EnquiryForm() {
       return;
     }
     try {
-      await create({ ...values, course: values.course === "any" ? undefined : values.course });
+      await createEnquiry({ ...values, course: values.course === "any" ? undefined : values.course }, demo);
       setDone(true);
     } catch {
       toast.error(t("failed"));
