@@ -29,16 +29,21 @@ function TopBar() {
   const { site, locale, setLocale } = useSite();
   const logo = str(site.logo);
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur @2xl:px-8">
-      <SiteLink to="/" className="flex min-w-0 items-center gap-2">
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-background/85 px-4 py-2 backdrop-blur @2xl:px-8">
+      <SiteLink to="/" className="flex min-w-0 items-center gap-2.5">
+        {/* object-contain + auto width so the full logo shows instead of being cropped into a tiny circle */}
         {logo ? (
-          <img src={logo} alt="" className="size-8 rounded-full object-cover" />
+          <img
+            src={logo}
+            alt=""
+            className="h-12 w-auto max-w-[140px] shrink-0 object-contain @2xl:h-16 @2xl:max-w-[200px]"
+          />
         ) : (
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+          <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-xl font-bold text-primary-foreground @2xl:size-14">
             K
           </span>
         )}
-        <span className={cn("truncate text-lg font-semibold", HEADING)}>{str(site.name)}</span>
+        <span className={cn("truncate text-lg font-semibold @2xl:text-xl", HEADING)}>{str(site.name)}</span>
       </SiteLink>
       <div role="group" aria-label="Language" className="flex shrink-0 rounded-full border border-border bg-card p-0.5">
         {LOCALES.map((l) => (
