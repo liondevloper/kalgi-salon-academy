@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { SiteProvider } from "@/lib/site-context.tsx";
 import { isLocale, saveLocale, savedLocale, type Locale } from "@/lib/i18n.ts";
 import { seedSiteData, str, toSiteData, type SiteData } from "@/lib/data.ts";
-import { isThemeId, resolveTokens, themeStyle, type ThemeId } from "@/lib/themes.ts";
+import { isThemeId, resolveTokens, themeStyle, type ThemeId, type ThemeTokens } from "@/lib/themes.ts";
 import { useBundle } from "@/hooks/use-bundle.ts";
 import SiteShell from "@/components/site/SiteShell.tsx";
 import Footer from "@/components/site/Footer.tsx";
@@ -38,6 +38,30 @@ function writePickedTheme(id: ThemeId | null) {
   } catch {
     // Storage blocked (private mode): the pick still works until reload
   }
+}
+
+// Apply theme CSS variables to :root so fixed/portal elements (BottomNav, WhatsApp FAB,
+// ThemeSwitcher, Sheet) always inherit the current theme, even when they render outside
+// the SiteShell subtree via fixed positioning.
+function useRootTheme(tokens: ThemeTokens) {
+  useEffect(() => {
+    const vars = themeStyle(tokens) as Record<string, string>;
+    const root = document.documentElement;
+    for (const [key, value] of Object.entries(vars)) {
+      if (key.startsWith("--")) {
+        root.style.setProperty(key, value);
+      }
+    }
+    // colorScheme drives the browser's native UI (scrollbars, inputs)
+    root.style.colorScheme = tokens.dark ? "dark" : "light";
+    return () => {
+      // Clean up all set properties on unmount so the default CSS values take over
+      for (const key of Object.keys(vars)) {
+        if (key.startsWith("--")) root.style.removeProperty(key);
+      }
+      root.style.removeProperty("color-scheme");
+    };
+  }, [tokens]);
 }
 
 // Loads content once and applies theme + locale. An empty or unreachable database shows the built-in demo content.
@@ -90,6 +114,8 @@ function LocaleSite({ children }: { children: (data: SiteData, path: string) => 
       data={data} locale={loc} setLocale={setLocale} tokens={tokens} themeId={id}
       setTheme={demo ? chooseTheme : undefined} demo={demo} activePath={rest}
     >
+      {/* RootThemeApplier sets :root CSS vars so fixed/portal elements always see the theme */}
+      <RootThemeApplier tokens={tokens} />
       <div style={themeStyle(tokens)} className="contents" data-theme={id} data-title={title}>
         <SiteShell>
           {children(data, rest)}
@@ -98,6 +124,12 @@ function LocaleSite({ children }: { children: (data: SiteData, path: string) => 
       </div>
     </SiteProvider>
   );
+}
+
+// Separate component so the hook only re-runs when tokens change
+function RootThemeApplier({ tokens }: { tokens: ThemeTokens }) {
+  useRootTheme(tokens);
+  return null;
 }
 
 function Pages() {
