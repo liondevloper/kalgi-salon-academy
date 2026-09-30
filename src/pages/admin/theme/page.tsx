@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { CSSProperties } from "react";
 import { Check } from "lucide-react";
 import { setSetting } from "@/lib/api/admin.ts";
 import { Button } from "@/components/ui/button.tsx";
@@ -17,17 +18,14 @@ import { useSiteData } from "../_lib/use-site-data.ts";
 const COLORS = ["primary", "accent", "background", "surface", "text"] as const;
 const FONTS = ["headingFont", "bodyFont"] as const;
 
-// ─── Site Theme Editor (existing) ────────────────────────────────────────────
+// ─── Site Theme Editor ────────────────────────────────────────────────────────
 
 function SiteEditor({ active, overrides }: { active: ThemeId; overrides: Rec }) {
   const act = useAct();
   const [theme, setTheme] = useState<ThemeId>(active);
   const [o, setO] = useState<Rec>(overrides);
   const { tokens } = resolveTokens(theme, o);
-  const pick = (id: ThemeId) => {
-    setTheme(id);
-    setO({});
-  };
+  const pick = (id: ThemeId) => { setTheme(id); setO({}); };
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_auto]">
@@ -78,31 +76,31 @@ function SiteEditor({ active, overrides }: { active: ThemeId; overrides: Rec }) 
   );
 }
 
-// ─── Admin Theme Editor (new) ─────────────────────────────────────────────────
+// ─── Admin Theme Editor ───────────────────────────────────────────────────────
 
 function AdminEditor({ active, overrides }: { active: ThemeId; overrides: Rec }) {
   const act = useAct();
   const [theme, setTheme] = useState<ThemeId>(active);
   const [o, setO] = useState<Rec>(overrides);
   const { tokens } = resolveTokens(theme, o);
-  const pick = (id: ThemeId) => {
-    setTheme(id);
-    setO({});
+  const pick = (id: ThemeId) => { setTheme(id); setO({}); };
+
+  const previewStyle: CSSProperties = {
+    ...(themeStyle(tokens) as CSSProperties),
+    background: "var(--background)",
+    color: "var(--foreground)",
   };
 
   return (
     <div className="space-y-6">
-      {/* Live preview of admin panel colors applied inline */}
-      <div
-        style={themeStyle(tokens)}
-        className="rounded-xl border p-6 [font-family:var(--t-body)]"
-        style={{ ...themeStyle(tokens), background: "var(--background)", color: "var(--foreground)" } as React.CSSProperties}
-      >
+      {/* Live preview of the selected admin colors */}
+      <div style={previewStyle} className="rounded-xl border p-6 [font-family:var(--t-body)]">
         <p className="mb-3 text-sm font-semibold" style={{ color: "var(--muted-foreground)" }}>Admin panel preview</p>
-        <div className="flex gap-2">
-          <span className="rounded px-3 py-1 text-sm font-medium" style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}>Primary button</span>
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded px-3 py-1 text-sm font-medium" style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}>Primary</span>
           <span className="rounded px-3 py-1 text-sm font-medium" style={{ background: "var(--secondary)", color: "var(--secondary-foreground)" }}>Secondary</span>
           <span className="rounded px-3 py-1 text-sm font-medium" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}>Accent</span>
+          <span className="rounded px-3 py-1 text-sm" style={{ color: "var(--muted-foreground)" }}>Sidebar nav item</span>
         </div>
       </div>
 
@@ -152,7 +150,7 @@ function AdminEditor({ active, overrides }: { active: ThemeId; overrides: Rec })
   );
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ThemePage() {
   const data = useSiteData();
@@ -181,7 +179,7 @@ export default function ThemePage() {
       <section>
         <PageHeader title="Admin Panel Theme" />
         <p className="mb-6 text-sm text-muted-foreground">
-          This theme is applied only to the admin panel — completely independent from the public site theme.
+          Admin panel ka alag theme — public website ke theme se bilkul independent.
         </p>
         {adminRow === undefined ? (
           <Skeleton className="h-[400px] w-full" />
