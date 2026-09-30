@@ -10,6 +10,8 @@ export type SiteCtx = {
   setLocale: (l: Locale) => void;
   tokens: ThemeTokens;
   themeId: ThemeId;
+  // Present only when visitors may try themes; null resets to the salon's own theme
+  setTheme?: (id: ThemeId | null) => void;
   demo: boolean;
   // preview = rendered inside a phone frame (no real navigation, nothing saved)
   preview: boolean;
@@ -27,6 +29,7 @@ type ProviderProps = {
   setLocale: (l: Locale) => void;
   tokens: ThemeTokens;
   themeId: ThemeId;
+  setTheme?: (id: ThemeId | null) => void;
   demo: boolean;
   preview?: boolean;
   onPreviewGo?: (path: string) => void;
@@ -44,7 +47,7 @@ export function SiteProvider({ children, ...p }: ProviderProps) {
       L: (x) => tr(x, p.locale),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [p.data, p.locale, p.tokens, p.themeId, p.demo, p.preview, p.activePath, p.onPreviewGo, p.setLocale],
+    [p.data, p.locale, p.tokens, p.themeId, p.setTheme, p.demo, p.preview, p.activePath, p.onPreviewGo, p.setLocale],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
