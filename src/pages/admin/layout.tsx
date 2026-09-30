@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet.tsx";
 import { cn } from "@/lib/utils.ts";
+import { useBundle } from "@/hooks/use-bundle.ts";
+import { rec, toSiteData } from "@/lib/data.ts";
+import { isThemeId, resolveTokens, themeStyle } from "@/lib/themes.ts";
 import LoginForm from "./_components/LoginForm.tsx";
 import { KIND_CONFIGS } from "./_lib/fields.ts";
 import { useAct } from "./_lib/use-admin.ts";
@@ -46,6 +49,21 @@ function NavList({ onPick }: { onPick?: () => void }) {
 
 function Center({ children }: { children: React.ReactNode }) {
   return <div className="grid min-h-screen place-items-center bg-background p-6 text-center">{children}</div>;
+}
+
+// Reads saved admin theme from the bundle and applies it to the admin wrapper
+function AdminThemeWrapper({ children }: { children: React.ReactNode }) {
+  const { data: bundle } = useBundle();
+  const adminThemeRow = bundle ? rec(toSiteData(bundle).settings.adminTheme) : {};
+  const { tokens } = resolveTokens(
+    isThemeId(adminThemeRow.active) ? adminThemeRow.active : "modern-minimal",
+    rec(adminThemeRow.overrides),
+  );
+  return (
+    <div style={themeStyle(tokens)} className="min-h-screen bg-background text-foreground [font-family:var(--t-body)]">
+      {children}
+    </div>
+  );
 }
 
 function Gate({ userId, email }: { userId: string; email: string }) {
@@ -116,5 +134,9 @@ export default function AdminLayout() {
   const { user, loading } = useAuth();
   if (loading) return <div className="p-6"><Skeleton className="h-screen w-full" /></div>;
   if (!user) return <Center><LoginForm /></Center>;
-  return <Gate userId={user.id} email={user.email ?? "this account"} />;
+  return (
+    <AdminThemeWrapper>
+      <Gate userId={user.id} email={user.email ?? "this account"} />
+    </AdminThemeWrapper>
+  );
 }
