@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CalendarCheck, GraduationCap, Home, Scissors, X } from "lucide-react";
+import { CalendarCheck, Check, ChevronDown, GraduationCap, Home, Languages, Scissors, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils.ts";
 import { useSite } from "@/lib/site-context.tsx";
@@ -25,42 +25,91 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
+// Single icon button that opens a small language list, so the header stays on one line
+function LanguagePicker() {
+  const { locale, setLocale } = useSite();
+  const [open, setOpen] = useState(false);
+  const current = LOCALES.find((l) => l.id === locale) ?? LOCALES[0];
+
+  const choose = (id: Locale) => {
+    setLocale(id);
+    setOpen(false);
+  };
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="Change language"
+        className="flex cursor-pointer items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground"
+      >
+        <Languages className="size-4" aria-hidden />
+        <span className="whitespace-nowrap">{current.label}</span>
+        <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} aria-hidden />
+      </button>
+      {open && (
+        <>
+          {/* Invisible backdrop closes the menu when tapping anywhere else */}
+          <button
+            type="button"
+            aria-label="Close language menu"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-40 cursor-default"
+          />
+          <ul
+            role="listbox"
+            aria-label="Language"
+            className="absolute right-0 top-full z-50 mt-2 min-w-36 overflow-hidden rounded-[var(--radius)] border border-border bg-card p-1 shadow-[var(--t-shadow)]"
+          >
+            {LOCALES.map((l) => {
+              const active = locale === l.id;
+              return (
+                <li key={l.id}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={active}
+                    onClick={() => choose(l.id)}
+                    className={cn(
+                      "flex w-full cursor-pointer items-center justify-between gap-3 whitespace-nowrap rounded-[calc(var(--radius)-4px)] px-3 py-2 text-sm font-semibold",
+                      active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted",
+                    )}
+                  >
+                    {l.label}
+                    {active && <Check className="size-4" aria-hidden />}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
 function TopBar() {
-  const { site, locale, setLocale } = useSite();
+  const { site } = useSite();
   const logo = str(site.logo);
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-background/85 px-4 py-2 backdrop-blur @2xl:px-8">
       <SiteLink to="/" className="flex min-w-0 items-center gap-2.5">
-        {/* object-contain + auto width so the full logo shows instead of being cropped into a tiny circle */}
-        {logo ? (
-          <img
-            src={logo}
-            alt=""
-            className="h-12 w-auto max-w-[140px] shrink-0 object-contain @2xl:h-16 @2xl:max-w-[200px]"
-          />
-        ) : (
-          <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-xl font-bold text-primary-foreground @2xl:size-14">
-            K
-          </span>
-        )}
+        {/* Round frame; the logo is zoomed so the mark fills it and extra margins hide behind the circle */}
+        <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-full border border-border bg-white @2xl:size-14">
+          {logo ? (
+            <img src={logo} alt="" className="size-full scale-[1.35] object-cover" />
+          ) : (
+            <span className="grid size-full place-items-center bg-primary text-xl font-bold text-primary-foreground">
+              K
+            </span>
+          )}
+        </span>
         <span className={cn("truncate text-lg font-semibold @2xl:text-xl", HEADING)}>{str(site.name)}</span>
       </SiteLink>
-      <div role="group" aria-label="Language" className="flex shrink-0 rounded-full border border-border bg-card p-0.5">
-        {LOCALES.map((l) => (
-          <button
-            key={l.id}
-            type="button"
-            onClick={() => setLocale(l.id as Locale)}
-            aria-pressed={locale === l.id}
-            className={cn(
-              "cursor-pointer rounded-full px-2.5 py-1 text-xs font-semibold",
-              locale === l.id ? "bg-primary text-primary-foreground" : "text-muted-foreground",
-            )}
-          >
-            {l.label}
-          </button>
-        ))}
-      </div>
+      <LanguagePicker />
     </header>
   );
 }
