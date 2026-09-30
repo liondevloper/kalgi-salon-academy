@@ -7,6 +7,7 @@ import { HEADING, themeStyle } from "@/lib/themes.ts";
 import { LOCALES, type Locale } from "@/lib/i18n.ts";
 import { str, waLink } from "@/lib/data.ts";
 import SiteLink from "./SiteLink.tsx";
+import ThemeSwitcher from "./ThemeSwitcher.tsx";
 
 const NAV = [
   { key: "home", path: "/", icon: Home },
@@ -39,21 +40,24 @@ function TopBar() {
         )}
         <span className={cn("truncate text-lg font-semibold", HEADING)}>{str(site.name)}</span>
       </SiteLink>
-      <div role="group" aria-label="Language" className="flex shrink-0 rounded-full border border-border bg-card p-0.5">
-        {LOCALES.map((l) => (
-          <button
-            key={l.id}
-            type="button"
-            onClick={() => setLocale(l.id as Locale)}
-            aria-pressed={locale === l.id}
-            className={cn(
-              "cursor-pointer rounded-full px-2.5 py-1 text-xs font-semibold",
-              locale === l.id ? "bg-primary text-primary-foreground" : "text-muted-foreground",
-            )}
-          >
-            {l.label}
-          </button>
-        ))}
+      <div className="flex shrink-0 items-center gap-2">
+        <ThemeSwitcher />
+        <div role="group" aria-label="Language" className="flex rounded-full border border-border bg-card p-0.5">
+          {LOCALES.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              onClick={() => setLocale(l.id as Locale)}
+              aria-pressed={locale === l.id}
+              className={cn(
+                "cursor-pointer rounded-full px-2.5 py-1 text-xs font-semibold",
+                locale === l.id ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+              )}
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
       </div>
     </header>
   );
