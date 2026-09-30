@@ -102,7 +102,7 @@ const UI: Record<string, L> = {
   noOffers: l("No offers right now. Check back soon.", "अभी कोई ऑफर नहीं है। जल्द दोबारा देखें।", "હાલ કોઈ ઓફર નથી. ફરી જુઓ."),
   nothingYet: l("Nothing here yet.", "अभी यहाँ कुछ नहीं है।", "અહીં હજી કંઈ નથી."),
   privacy: l("Privacy policy", "प्राइवेसी पॉलिसी", "પ્રાઇવસી પોલિસી"),
-  demoRibbon: l("Demo preview", "डेमो प्रीव्यू", "ડેમો પ્રીવ્યૂ"),
+  demoRibbon: l("Lion Developer", "Lion Developer", "Lion Developer"),
   invalid: l("Please check the highlighted fields", "कृपया हाईलाइट किए गए फ़ील्ड जाँचें", "કૃપા કરીને હાઇલાઇટ કરેલા ફીલ્ડ તપાસો"),
   failed: l("Could not send. Please try again.", "भेज नहीं सके। फिर कोशिश करें।", "મોકલી શક્યા નહીં. ફરી પ્રયાસ કરો."),
   previewOnly: l("Preview only, nothing was saved.", "सिर्फ़ प्रीव्यू, कुछ सेव नहीं हुआ।", "ફક્ત પ્રીવ્યૂ, કંઈ સેવ થયું નથી."),
