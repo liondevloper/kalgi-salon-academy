@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth.ts";
 import { Button } from "@/components/ui/button.tsx";
@@ -7,6 +6,8 @@ import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { errorMessage } from "../_lib/fields.ts";
+
+const LION_LOGO = "https://hercules-cdn.com/file_pwJsTVBr8g9Ev0263ThFVblj";
 
 // Email and password sign in only (Supabase Auth). Accounts are created by the owner, not on this page.
 export default function LoginForm() {
@@ -30,7 +31,10 @@ export default function LoginForm() {
   return (
     <form onSubmit={(e) => void submit(e)} className="grid w-full max-w-sm gap-4 text-left">
       <div className="grid justify-items-center gap-2 text-center">
-        <ShieldCheck className="size-10 text-primary" />
+        {/* Source image has wide white margins, so scale it up inside a clipped box */}
+        <div className="size-56 overflow-hidden rounded-2xl bg-white">
+          <img src={LION_LOGO} alt="Lion Developer" className="size-full scale-[1.9] object-contain" />
+        </div>
         <h1 className="text-2xl font-semibold">Kalgi Admin</h1>
         <p className="text-sm text-muted-foreground">Sign in to manage bookings and website content.</p>
       </div>
@@ -47,6 +51,7 @@ export default function LoginForm() {
       <Button type="submit" disabled={busy}>
         {busy && <Spinner />} Sign in
       </Button>
+      <p className="text-center text-xs text-muted-foreground">Made by Lion Developer</p>
     </form>
   );
 }
