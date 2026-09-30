@@ -199,6 +199,14 @@ export const SETTINGS_FIELDS: Record<string, { label: string; fields: Field[] }>
       ],
     ),
   },
+  // Switch lives in settings/page.tsx; these fields let the owner customise the message
+  maintenance: {
+    label: "Maintenance",
+    fields: [
+      { key: "title", label: "Heading (leave empty for default)", type: "l" },
+      { key: "message", label: "Message (leave empty for default)", type: "lt" },
+    ],
+  },
 };
 
 export function errorMessage(e: unknown, fallback = "Something went wrong"): string {

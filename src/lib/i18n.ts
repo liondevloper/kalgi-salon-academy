@@ -109,6 +109,13 @@ const UI: Record<string, L> = {
   whatsappGreeting: l("Hello Kalgi Salon", "नमस्ते कलगी सैलून", "નમસ્તે કલગી સલૂન"),
   priceOnRequest: l("Price on request", "कीमत पूछें", "કિંમત પૂછો"),
   specialOffer: l("Special offer", "स्पेशल ऑफर", "સ્પેશિયલ ઓફર"),
+  maintenanceBadge: l("Under maintenance", "मेंटेनेंस चालू है", "મેઈન્ટેનન્સ ચાલુ છે"),
+  maintenanceTitle: l("We'll be back soon", "हम जल्द वापस आएंगे", "અમે જલ્દી પાછા આવીશું"),
+  maintenanceBody: l(
+    "Our website is getting a quick makeover. You can still book on WhatsApp or call us.",
+    "हमारी वेबसाइट का काम चल रहा है। आप व्हाट्सऐप या कॉल से बुक कर सकते हैं।",
+    "અમારી વેબસાઇટનું કામ ચાલી રહ્યું છે. તમે વોટ્સએપ અથવા કૉલથી બુક કરી શકો છો.",
+  ),
 };
 
 export function ui(key: string, locale: Locale): string {
