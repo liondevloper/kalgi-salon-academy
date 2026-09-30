@@ -35,8 +35,8 @@ export type Bundle = {
   items: Record<string, { _id: string; order: number; data: Rec }[]>;
 };
 
-// Added "adminTheme" so admin layout can read its own saved theme
-const SETTING_KEYS = ["site", "hero", "about", "theme", "adminTheme", "sections", "seo"];
+// Added "adminTheme" so admin layout can read its own saved theme; "maintenance" holds the on/off switch
+const SETTING_KEYS = ["site", "hero", "about", "theme", "adminTheme", "sections", "seo", "maintenance"];
 
 export function toSiteData(bundle: Bundle): SiteData {
   const settings: Record<string, Rec> = {};

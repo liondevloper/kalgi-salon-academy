@@ -16,6 +16,14 @@ function SettingForm({ settingKey, initial }: { settingKey: string; initial: Rec
   const act = useAct();
   const [draft, setDraft] = useState<Rec>(initial);
   const conf = SETTINGS_FIELDS[settingKey];
+
+  // Maintenance switch saves right away so visitors see the change instantly
+  const toggleMaintenance = (on: boolean) => {
+    const next = { ...draft, enabled: on };
+    setDraft(next);
+    void act(() => setSetting(settingKey, next), on ? "Maintenance mode is on" : "Maintenance mode is off");
+  };
+
   return (
     <div className="grid gap-4">
       {settingKey === "site" && (
@@ -25,6 +33,17 @@ function SettingForm({ settingKey, initial }: { settingKey: string; initial: Rec
             <p className="text-xs text-muted-foreground">Shows a demo ribbon and hides the site from Google. Turn off when you go live.</p>
           </div>
           <Switch id="demo" checked={draft.demoMode !== false} onCheckedChange={(c) => setDraft({ ...draft, demoMode: c })} />
+        </div>
+      )}
+      {settingKey === "maintenance" && (
+        <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+          <div>
+            <Label htmlFor="maintenance">Maintenance mode</Label>
+            <p className="text-xs text-muted-foreground">
+              When on, every visitor instantly sees a &quot;We&apos;ll be back soon&quot; page. The admin panel keeps working.
+            </p>
+          </div>
+          <Switch id="maintenance" checked={draft.enabled === true} onCheckedChange={toggleMaintenance} />
         </div>
       )}
       <FieldsForm fields={conf.fields} value={draft} onChange={setDraft} />

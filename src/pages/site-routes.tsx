@@ -6,8 +6,10 @@ import { isLocale, saveLocale, savedLocale, type Locale } from "@/lib/i18n.ts";
 import { seedSiteData, str, toSiteData, type SiteData } from "@/lib/data.ts";
 import { isThemeId, resolveTokens, themeStyle, type ThemeId, type ThemeTokens } from "@/lib/themes.ts";
 import { useBundle } from "@/hooks/use-bundle.ts";
+import { useLiveSettings } from "@/hooks/use-live-settings.ts";
 import SiteShell from "@/components/site/SiteShell.tsx";
 import Footer from "@/components/site/Footer.tsx";
+import MaintenancePage from "@/components/site/MaintenancePage.tsx";
 import HomePage from "./home/page.tsx";
 import BookPage from "./book/page.tsx";
 import ServicesPage from "./services/page.tsx";
@@ -71,6 +73,8 @@ function LocaleSite({ children }: { children: (data: SiteData, path: string) => 
   const { pathname } = useLocation();
   const { data: bundle, isPending } = useBundle();
   const [picked, setPicked] = useState<ThemeId | null>(readPickedTheme);
+  // Realtime: maintenance on/off and other setting changes reach visitors without a reload
+  useLiveSettings();
 
   const loc: Locale = isLocale(locale) ? locale : "en";
   useEffect(() => {
@@ -108,6 +112,7 @@ function LocaleSite({ children }: { children: (data: SiteData, path: string) => 
   const rest = pathname.replace(/^\/(en|hi|gu)/, "") || "/";
   const setLocale = (l: Locale) => navigate(`/${l}${rest === "/" ? "" : rest}`);
   const title = str(data.settings.site.name);
+  const maintenance = data.settings.maintenance?.enabled === true;
 
   return (
     <SiteProvider
@@ -117,10 +122,14 @@ function LocaleSite({ children }: { children: (data: SiteData, path: string) => 
       {/* RootThemeApplier sets :root CSS vars so fixed/portal elements always see the theme */}
       <RootThemeApplier tokens={tokens} />
       <div style={themeStyle(tokens)} className="contents" data-theme={id} data-title={title}>
-        <SiteShell>
-          {children(data, rest)}
-          <Footer />
-        </SiteShell>
+        {maintenance ? (
+          <div className="@container"><MaintenancePage /></div>
+        ) : (
+          <SiteShell>
+            {children(data, rest)}
+            <Footer />
+          </SiteShell>
+        )}
       </div>
     </SiteProvider>
   );
