@@ -12,13 +12,14 @@ type Props = {
   className?: string;
 };
 
+// Only a slide-in, never opacity 0: if the scroll observer misfires the content must still be visible
 export default function Section({ id, title, action, children, className }: Props) {
   const { preview, tokens } = useSite();
   return (
     <motion.section
       id={id}
-      initial={preview ? false : { opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={preview ? false : { y: 18 }}
+      whileInView={{ y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.5 * tokens.animSpeed, ease: "easeOut" }}
       className={cn("mx-auto w-full max-w-6xl px-4 py-10 @2xl:px-8 @2xl:py-14", className)}
