@@ -92,7 +92,7 @@ function BottomNav() {
   );
 }
 
-// No circle behind the logo: the glyph itself is the button.
+// No circle and no shadow behind the logo: a shadow reads as a blurry line beside it.
 function WhatsAppFab() {
   const { site, t, preview } = useSite();
   return (
@@ -103,11 +103,11 @@ function WhatsAppFab() {
       aria-label="WhatsApp"
       onClick={preview ? (e) => e.preventDefault() : undefined}
       className={cn(
-        "z-40 cursor-pointer text-[#25D366] drop-shadow-[0_4px_8px_rgba(0,0,0,.35)] transition-transform hover:-translate-y-0.5 active:translate-y-[2px]",
+        "z-40 cursor-pointer text-[#25D366] transition-transform hover:-translate-y-0.5 active:translate-y-[2px]",
         preview ? "absolute bottom-24 right-3" : "fixed bottom-28 right-4",
       )}
     >
-      <WhatsAppIcon className="size-14" />
+      <WhatsAppIcon className="size-10" />
     </a>
   );
 }
